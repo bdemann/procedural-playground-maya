@@ -131,7 +131,7 @@ def createSeeSaw(width, height, length, numOfSeats, numOfRows):
 			for i in range(numOfSeats):
 				seat = createSeat(width, height, seatLength)
 				seatWidth = 2
-				sideFactor = (seatWidth + 1) * (i/2) + 1
+				sideFactor = (seatWidth + 1) * (i/2) + (seatWidth + 1)/2.0
 				side = (sideFactor * pow(-1, i))
 				print("The side movement value is: " + str(side))
 				adjustment = yMoveAmt + ((seatLength/2)* pow(-1, k))
