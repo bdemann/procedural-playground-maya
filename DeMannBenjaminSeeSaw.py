@@ -133,7 +133,8 @@ def createSeeSaw(width, height, length, numOfSeats, numOfRows):
 				seatWidth = 2
 				sideFactor = (seatWidth + 1) * (i/2) + 1
 				side = (sideFactor * pow(-1, i))
-				adjustment = yMoveAmt + seatLength/2 + pow(-1, k)
+				print("The side movement value is: " + str(side))
+				adjustment = yMoveAmt + ((seatLength/2)* pow(-1, k))
 				mc.move(side, 0, adjustment)
 				if(pow(-1, k) == -1):
 					mc.rotate(0, 180, 0)
