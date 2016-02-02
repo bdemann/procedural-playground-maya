@@ -105,8 +105,11 @@ def createSeeSaw(width, height, length, numOfSeats, numOfRows):
 	arm = mc.group(mainBody[0], name = "arm");
 	base = mc.group(mainBody[1], name = "bases");
 	
+	seatLength = 3
+	
 	#Create additional Beams and supports to accomidate all the seats
 	for j in range(0, (numOfSeats / 6)):
+		seeSawHeight = length + (numOfRows * seatLength);
 		beamPos = (((j+1) * 6) -1)
 		for i in range(2):
 			body = createBody(width, height, length)
@@ -119,7 +122,6 @@ def createSeeSaw(width, height, length, numOfSeats, numOfRows):
 	for j in range(1, numOfRows + 1):
 		for k in range(2):
 			#Create a support for each row
-			seatLength = 3
 			
 			#In order to move 
 			yMoveAmt = ((((length/2) + (j * seatLength))-seatLength) * pow(-1, k))
@@ -133,7 +135,6 @@ def createSeeSaw(width, height, length, numOfSeats, numOfRows):
 				seatWidth = 2
 				sideFactor = (seatWidth + 1) * (i/2) + (seatWidth + 1)/2.0
 				side = (sideFactor * pow(-1, i))
-				print("The side movement value is: " + str(side))
 				adjustment = yMoveAmt + ((seatLength/2)* pow(-1, k))
 				mc.move(side, 0, adjustment)
 				if(pow(-1, k) == -1):
@@ -141,9 +142,10 @@ def createSeeSaw(width, height, length, numOfSeats, numOfRows):
 				mc.parent(seat, arm)
 				
 	#Set the rocking motion
-	rand = random.randint(0,100)
+	rand = random.randint(1,10)
 	#mc.expression( s = arm + ".rotateX = 30 * cos((frame-" + str(rand) + ") * .04)")
-	mc.expression( s = arm + ".rotateX = 30 * sin(frame * .04)")
+	mc.expression( s = arm + ".rotateX = 30 * sin(frame * .01 * " + str(rand) + ")")
+
 	return mc.group(arm, base, name = "seeSaw")
 	
 				
@@ -182,13 +184,14 @@ len = 40
 #move ( 2, 0, 0, r = True)
 
 
-for i in range(1):
+for i in range(6):
 	length = random.randint(15, 40)
 	numOfSeats = random.randrange(2, 12, 2)
 	numOfRows = random.randint(1, 3)
-	mc.select(all = True)
-	mc.move(15, 0, 0, r = True)
 	createSeeSaw(1, .5, length, numOfSeats, numOfRows)
+	mc.move((i%3) * 40, 0, ((i / 3) % 3) * 40, r = True)
+	rotation = random.randint(0, 360)
+	mc.rotate(0, rotation, 0)
 
 #createSeeSaw(1, .5, 10, 6, 2)
 
