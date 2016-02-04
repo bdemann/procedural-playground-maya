@@ -1,4 +1,5 @@
-#can I set the center of a group to 0,0,0 before I move it instead of having the center be the average of all the parts. That would make my rotations a lot easier.
+#can I set the center of a group to 0,0,0 before I move it instead of having the center be the average of all the parts. That would make my rotations a lot easier. 
+#Delete this comment,
 import maya.cmds as mc
 import random
 
