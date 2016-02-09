@@ -39,59 +39,106 @@ class Platform:
 		
 	def getName(self):
 		return self.name
+		
+	def hasUp(self):
+		return self.up
+		
+	def hasDown(self):
+		return self.down
+		
+	def hasRight(self):
+		return self.right
+		
+	def hasLeft(self):
+		return self.left
 
-shapes = range(3)
+# shapes = range(3)
 
-for i in range(3):
-	shapes[i] = Platform()
-	mc.move(i, i, i, shapes[i].getName())
-	print shapes[i].getName()
+# for i in range(3):
+	# shapes[i] = Platform()
+	# mc.move(i, i, i, shapes[i].getName())
+	# print shapes[i].getName()
 	
-colCount = 5;
-rowCount = 6;
-platform = [[0 for x in range(colCount)] for x in range(rowCount)]
-for i in range(rowCount):
+colCount = 5
+rowCount = 5
+# platform = [[0 for x in range(colCount)] for x in range(rowCount)]
+# for i in range(rowCount):
+	# row = "";
+	# for j in range(colCount):
+		# platform[i][j] = Platform(up = True, down = True, left = True, right = True);
+		# mc.move(i*16, 0, j*16, platform[i][j].getName())
+		# row = row + str(platform[i][j].getName())
+	# print row
+
+def generateMaze(platforms):
+	generateNeighbors(platforms, 0, 0)
+	for i in range(rowCount):
 	row = "";
 	for j in range(colCount):
 		platform[i][j] = Platform(up = True, down = True, left = True, right = True);
 		mc.move(i*16, 0, j*16, platform[i][j].getName())
 		row = row + str(platform[i][j].getName())
 	print row
-
-def generateMaze(platforms):
-	generateNeighbors(platforms, 0, 0)
 	
 def generateNeighbors(platforms, row, col):
+	if(row > 5 or col > 5 or row < 0 or col < 0):
+		return
+	if(platforms[row][col] != 0):
+		return
+	
 	#Figure out up
-	if(row == 0):
+	if(row <= 0):
 		up = False
+	else:
+		up = True
 	
 	#Figure out right
-	if(col + 1 >= len(platforms[0])):
+	if(col >= 5 - 1):
 		right = False
+	else:
+		right = True
 	
 	#Figure out left
+	if(col <= 0):
+		left = False
+	else:
+		left = True
 	
 	#Figure out down
-	platforms[row][col] = Platform(up = True, right = True)
+	if(row >= 5 -1):
+		down = False
+	else:
+		down = True
+		
+	print "Row is " + str(row) + " Col is " + str(col)
+		
+	platforms[row][col] = Platform(up = up, right = right, left = left, down = down)
+	platform = platforms[row][col]
+	if(platform.hasRight()):
+		generateNeighbors(platforms, row, col + 1)
+	if(platform.hasDown()):
+		generateNeighbors(platforms, row + 1, col)
+	if(platform.hasLeft()):
+		generateNeighbors(platforms, row, col - 1)
 	if(platform.hasUp()):
-		generateNeighbors
-	
+		generateNeighbors(platforms, row - 1, col)
 	
 
-def makeGear(radius, height, thickness, sections):
-    inner = mc.polyPipe(r = 3.5, h = height, t = 1)
-    gear = mc.polyPipe(r = radius, h = height, t = thickness)
-    mc.setAttr(gear[1] + ".subdivisionsAxis", sections)
-    for i in range(sections):
-        if(i % 2 == 0):
-            mc.select( gear[0] + ".f[" + str(i) + "]" )
-            exFace = mc.polyExtrudeFacet(gear[0] + ".f[" + str(i + sections * 2) + "]")
-            mc.setAttr(exFace[0] + ".localTranslate", 0, 0, 3, type="double3")
-            mc.setAttr(exFace[0] + ".localScale", .75, 1, 1)
-        if(i % 4 == 0):
-            mc.select( gear[0] + ".f[" + str(i) + "]" )
-            exFace = mc.polyExtrudeFacet(gear[0] + ".f[" + str(i) + "]")
-            mc.setAttr(exFace[0] + ".localTranslate", 0, 0, radius - thickness - 3, type="double3")
-            mc.setAttr(exFace[0] + ".localScale", .8, 1, 1)
+platform = [[0 for x in range(colCount)] for x in range(rowCount)]
+generateMaze(platform)
 
+# def makeGear(radius, height, thickness, sections):
+    # inner = mc.polyPipe(r = 3.5, h = height, t = 1)
+    # gear = mc.polyPipe(r = radius, h = height, t = thickness)
+    # mc.setAttr(gear[1] + ".subdivisionsAxis", sections)
+    # for i in range(sections):
+        # if(i % 2 == 0):
+            # mc.select( gear[0] + ".f[" + str(i) + "]" )
+            # exFace = mc.polyExtrudeFacet(gear[0] + ".f[" + str(i + sections * 2) + "]")
+            # mc.setAttr(exFace[0] + ".localTranslate", 0, 0, 3, type="double3")
+            # mc.setAttr(exFace[0] + ".localScale", .75, 1, 1)
+        # if(i % 4 == 0):
+            # mc.select( gear[0] + ".f[" + str(i) + "]" )
+            # exFace = mc.polyExtrudeFacet(gear[0] + ".f[" + str(i) + "]")
+            # mc.setAttr(exFace[0] + ".localTranslate", 0, 0, radius - thickness - 3, type="double3")
+            # mc.setAttr(exFace[0] + ".localScale", .8, 1, 1)
