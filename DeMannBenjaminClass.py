@@ -73,12 +73,12 @@ rowCount = 5
 def generateMaze(platforms):
 	generateNeighbors(platforms, 0, 0)
 	for i in range(rowCount):
-	row = "";
-	for j in range(colCount):
-		platform[i][j] = Platform(up = True, down = True, left = True, right = True);
-		mc.move(i*16, 0, j*16, platform[i][j].getName())
-		row = row + str(platform[i][j].getName())
-	print row
+		row = "";
+		for j in range(colCount):
+			mc.select(platform[i][j].getName());
+			mc.move(i*-16, 0, j*16, platform[i][j].getName())
+			row = row + str(platform[i][j].getName())
+		print row
 	
 def generateNeighbors(platforms, row, col):
 	if(row > 5 or col > 5 or row < 0 or col < 0):
@@ -90,25 +90,61 @@ def generateNeighbors(platforms, row, col):
 	if(row <= 0):
 		up = False
 	else:
-		up = True
+		platAbove = platforms[row][col -1]
+		#Check if there is platfrom to the north
+		if(platAbove != 0):
+			if(platAbove.hasDown())
+				up = True
+			else:
+				up = False
+		else:
+			#randomly generate if it goes north.
+			up = random.choice([True, False])
 	
 	#Figure out right
 	if(col >= 5 - 1):
 		right = False
 	else:
-		right = True
+		platRight = platforms[row][col -1]
+		#Check if there is platfrom to the north
+		if(platRight != 0):
+			if(platRight.hasDown())
+				up = True
+			else:
+				up = False
+		else:
+			#randomly generate if it goes north.
+			up = random.choice([True, False])
 	
 	#Figure out left
 	if(col <= 0):
 		left = False
 	else:
-		left = True
+		platLeft = platforms[row][col -1]
+		#Check if there is platfrom to the north
+		if(platLeft != 0):
+			if(platLeft.hasDown())
+				up = True
+			else:
+				up = False
+		else:
+			#randomly generate if it goes north.
+			up = random.choice([True, False])
 	
 	#Figure out down
 	if(row >= 5 -1):
 		down = False
 	else:
-		down = True
+		platBelow = platforms[row][col -1]
+		#Check if there is platfrom to the north
+		if(platBelow != 0):
+			if(platBelow.hasDown())
+				up = True
+			else:
+				up = False
+		else:
+			#randomly generate if it goes north.
+			up = random.choice([True, False])
 		
 	print "Row is " + str(row) + " Col is " + str(col)
 		
