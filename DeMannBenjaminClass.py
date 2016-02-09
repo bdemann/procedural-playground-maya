@@ -35,7 +35,7 @@ class Platform:
 			if(self.right):
 				mc.select(self.name + ".f[1]", tgl = True)
 			exFace = mc.polyExtrudeFacet()
-			mc.setAttr(exFace[0] + ".localTranslate", 0, 0, 3, type="double3")
+			mc.setAttr(exFace[0] + ".localTranslate", 0, 0, 5, type="double3")
 		
 	def getName(self):
 		return self.name
@@ -59,8 +59,8 @@ class Platform:
 	# mc.move(i, i, i, shapes[i].getName())
 	# print shapes[i].getName()
 	
-colCount = 5
-rowCount = 5
+colCount = 20
+rowCount = 50
 # platform = [[0 for x in range(colCount)] for x in range(rowCount)]
 # for i in range(rowCount):
 	# row = "";
@@ -70,111 +70,123 @@ rowCount = 5
 		# row = row + str(platform[i][j].getName())
 	# print row
 
-def generateMaze(platforms):
-	generateNeighbors(platforms, 0, 0)
-	for i in range(rowCount):
-		row = "";
-		for j in range(colCount):
-			mc.select(platform[i][j].getName());
-			mc.move(i*-16, 0, j*16, platform[i][j].getName())
-			row = row + str(platform[i][j].getName())
-		print row
 	
-def generateNeighbors(platforms, row, col):
-	if(row > 5 or col > 5 or row < 0 or col < 0):
-		return
-	if(platforms[row][col] != 0):
-		return
+class Test:
+	'Test class'
 	
-	#Figure out up
-	if(row <= 0):
-		up = False
-	else:
-		platAbove = platforms[row][col -1]
-		#Check if there is platfrom to the north
-		if(platAbove != 0):
-			if(platAbove.hasDown())
-				up = True
-			else:
-				up = False
-		else:
-			#randomly generate if it goes north.
-			up = random.choice([True, False])
-	
-	#Figure out right
-	if(col >= 5 - 1):
-		right = False
-	else:
-		platRight = platforms[row][col -1]
-		#Check if there is platfrom to the north
-		if(platRight != 0):
-			if(platRight.hasDown())
-				up = True
-			else:
-				up = False
-		else:
-			#randomly generate if it goes north.
-			up = random.choice([True, False])
-	
-	#Figure out left
-	if(col <= 0):
-		left = False
-	else:
-		platLeft = platforms[row][col -1]
-		#Check if there is platfrom to the north
-		if(platLeft != 0):
-			if(platLeft.hasDown())
-				up = True
-			else:
-				up = False
-		else:
-			#randomly generate if it goes north.
-			up = random.choice([True, False])
-	
-	#Figure out down
-	if(row >= 5 -1):
-		down = False
-	else:
-		platBelow = platforms[row][col -1]
-		#Check if there is platfrom to the north
-		if(platBelow != 0):
-			if(platBelow.hasDown())
-				up = True
-			else:
-				up = False
-		else:
-			#randomly generate if it goes north.
-			up = random.choice([True, False])
-		
-	print "Row is " + str(row) + " Col is " + str(col)
-		
-	platforms[row][col] = Platform(up = up, right = right, left = left, down = down)
-	platform = platforms[row][col]
-	if(platform.hasRight()):
-		generateNeighbors(platforms, row, col + 1)
-	if(platform.hasDown()):
-		generateNeighbors(platforms, row + 1, col)
-	if(platform.hasLeft()):
-		generateNeighbors(platforms, row, col - 1)
-	if(platform.hasUp()):
-		generateNeighbors(platforms, row - 1, col)
-	
+	def __init__(self, num = 1, num2 = 2, num3 = 1 + 2):
+		self.num = num
+		self.num2 = num2
+		self.num3 = num3
+		self.hConnect = range(0)
+		self.vConnect = range(0)
+		self.hConnect.append(1)
+		self.hConnect.append(7)
+		self.hConnect.append(37)
+		print self.num3
+		print self.hConnect
 
-platform = [[0 for x in range(colCount)] for x in range(rowCount)]
-generateMaze(platform)
-
-# def makeGear(radius, height, thickness, sections):
-    # inner = mc.polyPipe(r = 3.5, h = height, t = 1)
-    # gear = mc.polyPipe(r = radius, h = height, t = thickness)
-    # mc.setAttr(gear[1] + ".subdivisionsAxis", sections)
-    # for i in range(sections):
-        # if(i % 2 == 0):
-            # mc.select( gear[0] + ".f[" + str(i) + "]" )
-            # exFace = mc.polyExtrudeFacet(gear[0] + ".f[" + str(i + sections * 2) + "]")
-            # mc.setAttr(exFace[0] + ".localTranslate", 0, 0, 3, type="double3")
-            # mc.setAttr(exFace[0] + ".localScale", .75, 1, 1)
-        # if(i % 4 == 0):
-            # mc.select( gear[0] + ".f[" + str(i) + "]" )
-            # exFace = mc.polyExtrudeFacet(gear[0] + ".f[" + str(i) + "]")
-            # mc.setAttr(exFace[0] + ".localTranslate", 0, 0, radius - thickness - 3, type="double3")
-            # mc.setAttr(exFace[0] + ".localScale", .8, 1, 1)
+test = Test(5, 5)
+	
+class Maze:
+	'Playground maze'
+	
+	def __init__(self, rowCount = 5, colCount = 5):
+		#Set all entries in maze to 0 and use 0 to represent an uncreated platform
+		self.platforms = [[0 for x in range(colCount)] for x in range(rowCount)]
+		self.hConnect = range(0)
+		self.vConnect = range(0)
+		self.rowCount = rowCount
+		self.colCount = colCount
+	
+	def generateMaze(self):
+		self.generateNeighbors(0, 0)
+		print "Number of rows "  + str(self.rowCount)
+		print "Number of columns " + str(self.colCount)
+		for i in range(self.rowCount):
+			for j in range(self.colCount):
+				if(self.platforms[i][j] != 0):
+					mc.select(self.platforms[i][j].getName());
+					mc.move(i*-20, 0, j*20, self.platforms[i][j].getName())
+			
+	def generateNeighbors(self, row, col):
+		if(row > self.rowCount or col > self.colCount or row < 0 or col < 0):
+			return
+		if(self.platforms[row][col] != 0):
+			return
+		
+		#Figure out up
+		if(row <= 0):
+			up = False
+		else:
+			platAbove = self.platforms[row - 1][col]
+			#Check if there is platfrom to the north
+			if(platAbove != 0):
+				if(platAbove.hasDown()):
+					up = True
+				else:
+					up = False
+			else:
+				#randomly generate if it goes north.
+				up = random.choice([True, False])
+		
+		#Figure out right
+		if(col >= self.colCount - 1):
+			right = False
+		else:
+			platRight = self.platforms[row][col + 1]
+			#Check if there is platfrom to the north
+			if(platRight != 0):
+				if(platRight.hasLeft()):
+					right = True
+				else:
+					right = False
+			else:
+				#randomly generate if it goes north.
+				right = random.choice([True, False])
+		
+		#Figure out left
+		if(col <= 0):
+			left = False
+		else:
+			platLeft = self.platforms[row][col - 1]
+			#Check if there is platfrom to the north
+			if(platLeft != 0):
+				if(platLeft.hasRight()):
+					left = True
+				else:
+					left = False
+			else:
+				#randomly generate if it goes north.
+				left = random.choice([True, False])
+		
+		#Figure out down
+		if(row >= self.rowCount - 1):
+			down = False
+		else:
+			platBelow = self.platforms[row + 1][col]
+			#Check if there is platfrom to the north
+			if(platBelow != 0):
+				if(platBelow.hasUp()):
+					down = True
+				else:
+					down = False
+			else:
+				#randomly generate if it goes north.
+				down = random.choice([True, False])
+			
+		print "Row is " + str(row) + " Col is " + str(col)
+			
+		self.platforms[row][col] = Platform(up = up, right = right, left = left, down = down)
+		platform = self.platforms[row][col]
+		if(platform.hasRight()):
+			self.generateNeighbors(row, col + 1)
+		if(platform.hasDown()):
+			self.generateNeighbors(row + 1, col)
+		if(platform.hasLeft()):
+			self.generateNeighbors(row, col - 1)
+		if(platform.hasUp()):
+			self.generateNeighbors(row - 1, col)
+	
+maze = Maze(rowCount = rowCount, colCount = colCount)
+maze.generateMaze()
