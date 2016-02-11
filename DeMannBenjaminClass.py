@@ -4,6 +4,7 @@ import random
 class Platform:
 	'Playground platform'
 	platCount = 0
+	headSpace = 10
 	
 	def __init__(self, north = False, south = False, west = False, east = False, height = 1):
 		self.height = height
@@ -24,22 +25,11 @@ class Platform:
 		
 		supports = range(4);
 		for i in supports:
-			supports[i] = mc.polyCube(h = 15)[0]
-			mc.move(pow(-1, i/2) * 5, 0, pow(-1, i) * 5)
-		self.name = mc.group(supports, base)
-		
-		# if(self.north or self.south or self.east or self.west):
-			# mc.select(cl = True)
-			# if(self.north):
-				# mc.select(self.name + ".f[25]", tgl = True)
-			# if(self.west):
-				# mc.select(self.name + ".f[13]", tgl = True)
-			# if(self.south):
-				# mc.select(self.name + ".f[28]", tgl = True)
-			# if(self.east):
-				# mc.select(self.name + ".f[1]", tgl = True)
-			# exFace = mc.polyExtrudeFacet()
-			# mc.setAttr(exFace[0] + ".localTranslate", 0, 0, 5, type="double3")
+			height = (8 * self.height) + Platform.headSpace
+			supports[i] = mc.polyCube(h = height)[0]
+			yMove = Platform.headSpace - (height - 1) / 2.0
+			mc.move(pow(-1, i/2) * 5, yMove, pow(-1, i) * 5)
+		self.name = mc.group(supports, base, name = "platform")
 		
 	def getName(self):
 		return self.name
@@ -65,6 +55,7 @@ class Connection:
 		self.pCol = pCol
 		#print "Adding to [" + str(pRow) + "][" + str(pCol) + "]"
 		Connection.conCount += 1
+		self.name = "connection"
 		
 	def displayCount(self):
 		print "Total Connections %d" % Connection.platCount
@@ -74,6 +65,9 @@ class Connection:
 			self.makeBridge()
 		else:
 			self.makeMonkeyBars()
+	
+	def getName(self):
+		return self.name
 	
 	def makeBridge(self):
 		planks = range(0)
@@ -85,7 +79,8 @@ class Connection:
 			mc.move(0, y, z)
 			rotateX = pow(-1, i) * (i/2) * -2
 			mc.rotate(rotateX, 0, 0)
-		return mc.group(planks)
+		self.name = mc.group(planks, name = "bridge")
+		return self.name
 
 	def makeMonkeyBars(self):
 		bars = range(0)
@@ -94,18 +89,21 @@ class Connection:
 		for i in range(1, numOfBars + 1):
 			bars.append(mc.polyCylinder(r = 0.1, height = width, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			z = pow(-1, i) * ((i/2)/((numOfBars + 1) * 1.0) * 10)
-			mc.move(0, 5, z)
+			mc.move(0, 0, z)
 		
 		rails = range(0)
 		for i in range(2):
 			rails.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [0, 0, 1])[0])
-			mc.move(pow(-1, i) * (width/2), 5, 0)
+			mc.move(pow(-1, i) * (width/2), 0, 0)
 			
 		supports = range(0)
 		for i in range(2):
 			supports.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
-			mc.move(0, 5, pow(-1, i) * 5)
-		return mc.group(bars, rails, supports)
+			mc.move(0, 0, pow(-1, i) * 5)
+		monkeyBars = mc.group(bars, rails, supports)
+		mc.move(0, Platform.headSpace - 2, 0, monkeyBars, r = True)
+		self.name = mc.group(monkeyBars, name = "monkeyBars")
+		return self.name
 	
 class Maze:
 	'Playground maze'
@@ -120,6 +118,7 @@ class Maze:
 		self.camera = mc.camera()[0]
 		mc.move(0, 5, 0, self.camera)
 		self.time = 1
+		self.name = mc.group(self.camera, name = "maze")
 	
 	def generateMaze(self):
 		self.generateNeighbors(0, 0)
@@ -128,13 +127,16 @@ class Maze:
 				if(self.platforms[i][j] != 0):
 					mc.select(self.platforms[i][j].getName());
 					mc.move(i*-20, 0, j*20, self.platforms[i][j].getName())
+					mc.parent(self.platforms[i][j].getName(), self.name)
 				if(j < self.colCount -1 and self.hConnect[i][j] != 0):
 					self.hConnect[i][j].draw(0)
-					mc.move((self.hConnect[i][j].pRow*-20), 0, (self.hConnect[i][j].pCol*20) + 10)	
+					mc.move((self.hConnect[i][j].pRow*-20), 0, (self.hConnect[i][j].pCol*20) + 10)
+					mc.parent(self.hConnect[i][j].getName(), self.name)
 				if(i < self.rowCount -1 and self.vConnect[i][j] != 0):
 					self.vConnect[i][j].draw(1)
 					mc.move((self.vConnect[i][j].pRow*-20) - 10, 0, (self.vConnect[i][j].pCol*20))
 					mc.rotate(0, 90, 0)
+					mc.parent(self.vConnect[i][j].getName(), self.name)
 	
 	def northChoice(self, row, col):
 		if(row <= 0):
