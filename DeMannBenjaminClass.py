@@ -117,6 +117,9 @@ class Maze:
 		self.vConnect = [[0 for x in range(colCount)] for x in range(rowCount - 1)]
 		self.rowCount = rowCount
 		self.colCount = colCount
+		self.camera = mc.camera()[0]
+		mc.move(0, 5, 0, self.camera)
+		self.time = 1
 	
 	def generateMaze(self):
 		self.generateNeighbors(0, 0)
@@ -192,11 +195,32 @@ class Maze:
 	def coinFlip(self):
 		return random.choice([True, False])
 	
+	def cameraKeyframe(self, time):
+		self.time += time
+		mc.setKeyframe(self.camera, t = self.time)
+	
+	def cameraTurn(self, direction):
+		if(direction == "north"):
+			rotation = -90
+		elif(direction == "west"):
+			rotation = 0
+		elif(direction == "south"):
+			rotation = 90
+		elif(direction == "east"):
+			rotation = 180
+		mc.rotate(0, rotation, 0, self.camera)
+		self.cameraKeyframe(20)
+		
+	def cameraMove(self, x, z):
+		mc.move(x*-20, 2.5, z*20, self.camera)
+		self.cameraKeyframe(120)
+	
 	#returns true if there is a neighbor
 	def generateNeighbors(self, row, col):
 		if(row > self.rowCount or col > self.colCount or row < 0 or col < 0):
 			return False
 		if(self.platforms[row][col] != 0):
+			self.cameraMove(row, col)
 			return True
 		
 		#Figure out north
@@ -210,22 +234,35 @@ class Maze:
 			
 		self.platforms[row][col] = Platform(north = north, east = east, west = west, south = south)
 		platform = self.platforms[row][col]
+		self.cameraMove(row, col)
 		if(platform.hasEast()):
+			self.cameraTurn("east")
 			if(self.generateNeighbors(row, col + 1) and col < self.colCount -1):
 				print "Making East conn from [" + str(row) + "][" + str(col) + "] to [" + str(row) + "][" + str(col + 1) + "]"
 				self.hConnect[row][col] = Connection(row, col)
+				self.cameraTurn("west")
+				self.cameraMove(row, col)
 		if(platform.hasSouth()):
+			self.cameraTurn("south")
 			if(self.generateNeighbors(row + 1, col) and row < self.rowCount -1):
 				print "Making South conn from [" + str(row) + "][" + str(col) + "] to [" + str(row + 1) + "][" + str(col) + "]"
 				self.vConnect[row][col] = Connection(row, col)
+				self.cameraTurn("north")
+				self.cameraMove(row, col)
 		if(platform.hasWest()):
+			self.cameraTurn("west")
 			if(self.generateNeighbors(row, col - 1) and col < self.colCount -1):
 				print "Making West conn from [" + str(row) + "][" + str(col - 1) + "] to [" + str(row) + "][" + str(col) + "]"
 				self.hConnect[row][col - 1] = Connection(row, col - 1)
+				self.cameraTurn("east")
+				self.cameraMove(row, col)
 		if(platform.hasNorth()):
+			self.cameraTurn("north")
 			if(self.generateNeighbors(row - 1, col) and row < self.rowCount -1):
 				print "Making North conn from [" + str(row -1 ) + "][" + str(col) + "] to [" + str(row) + "][" + str(col) + "]"
 				self.vConnect[row - 1][col] = Connection(row - 1, col)
+				self.cameraTurn("south")
+				self.cameraMove(row, col)
 			
 		return True
 
@@ -234,5 +271,6 @@ colCount = 5
 rowCount = 5
 maze = Maze(rowCount = rowCount, colCount = colCount)
 maze.generateMaze()
+mc.playbackOptions(max = maze.time)
 print "Platforms: " + str(Platform.platCount)
 print "Connections: " + str(Connection.conCount)
