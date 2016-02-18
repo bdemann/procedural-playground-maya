@@ -237,13 +237,49 @@ class Maze:
 			# mc.rotate(180, 0, 0, self.camera)
 			# self.cameraKeyframe(45)
 	
+	def traverseMaze(self):
+		self.visitBlock(0, 0);
+		
+	def visitBlock(self, row, col):
+		if(row > self.rowCount or col > self.colCount or row < 0 or col < 0):
+			return False
+		if(self.platforms[row][col].visted):
+			return False
+			
+		platform = self.platforms[row][col]
+		platform.visted = True
+		self.cameraMove(row, col)
+		if(platform.hasEast() and not self.platforms[row][col + 1].visted):
+			self.cameraTurn("east")
+			if(self.visitBlock(row, col + 1) and col < self.colCount -1):
+				self.cameraTurn("west")
+				self.cameraMove(row, col)
+		if(platform.hasSouth() and not self.platforms[row + 1][col].visted):
+			self.cameraTurn("south")
+			if(self.visitBlock(row + 1, col) and row < self.rowCount -1):
+				self.cameraTurn("north")
+				self.cameraMove(row, col)
+		if(platform.hasWest() and not self.platforms[row][col - 1].visted):
+			self.cameraTurn("west")
+			if(self.visitBlock(row, col - 1) and col < self.colCount -1):
+				self.cameraTurn("east")
+				self.cameraMove(row, col)
+		if(platform.hasNorth() and not self.platforms[row - 1][col].visted):
+			self.cameraTurn("north")
+			if(self.visitBlock(row - 1, col) and row < self.rowCount -1):
+				self.cameraTurn("south")
+				self.cameraMove(row, col)
+			
+		platform.visted = False
+		return True
+	
 	#returns true if there is a neighbor
 	def generateNeighbors(self, row, col):
 		if(row > self.rowCount or col > self.colCount or row < 0 or col < 0):
 			return False
 		if(self.platforms[row][col] != 0):
-			if(not self.platforms[row][col].visted):
-				self.cameraMove(row, col)
+			#~ if(not self.platforms[row][col].visted):
+				#~ self.cameraMove(row, col)
 			return True
 		
 		#Figure out north
@@ -257,38 +293,38 @@ class Maze:
 			
 		self.platforms[row][col] = Platform(north = north, east = east, west = west, south = south, height = 3)
 		platform = self.platforms[row][col]
-		platform.visted = True
-		self.cameraMove(row, col)
+		#~ platform.visted = True
+		#~ self.cameraMove(row, col)
 		if(platform.hasEast()):
-			self.cameraTurn("east")
+			#~ self.cameraTurn("east")
 			if(self.generateNeighbors(row, col + 1) and col < self.colCount -1):
 				print "Making East conn from [" + str(row) + "][" + str(col) + "] to [" + str(row) + "][" + str(col + 1) + "]"
 				self.hConnect[row][col] = Connection(row, col)
-				self.cameraTurn("west")
-				self.cameraMove(row, col)
+				#~ self.cameraTurn("west")
+				#~ self.cameraMove(row, col)
 		if(platform.hasSouth()):
-			self.cameraTurn("south")
+			#~ self.cameraTurn("south")
 			if(self.generateNeighbors(row + 1, col) and row < self.rowCount -1):
 				print "Making South conn from [" + str(row) + "][" + str(col) + "] to [" + str(row + 1) + "][" + str(col) + "]"
 				self.vConnect[row][col] = Connection(row, col)
-				self.cameraTurn("north")
-				self.cameraMove(row, col)
+				#~ self.cameraTurn("north")
+				#~ self.cameraMove(row, col)
 		if(platform.hasWest()):
-			self.cameraTurn("west")
+			#~ self.cameraTurn("west")
 			if(self.generateNeighbors(row, col - 1) and col < self.colCount -1):
 				print "Making West conn from [" + str(row) + "][" + str(col - 1) + "] to [" + str(row) + "][" + str(col) + "]"
 				self.hConnect[row][col - 1] = Connection(row, col - 1)
-				self.cameraTurn("east")
-				self.cameraMove(row, col)
+				#~ self.cameraTurn("east")
+				#~ self.cameraMove(row, col)
 		if(platform.hasNorth()):
-			self.cameraTurn("north")
+			#~ self.cameraTurn("north")
 			if(self.generateNeighbors(row - 1, col) and row < self.rowCount -1):
 				print "Making North conn from [" + str(row -1 ) + "][" + str(col) + "] to [" + str(row) + "][" + str(col) + "]"
 				self.vConnect[row - 1][col] = Connection(row - 1, col)
-				self.cameraTurn("south")
-				self.cameraMove(row, col)
+				#~ self.cameraTurn("south")
+				#~ self.cameraMove(row, col)
 			
-		platform.visted = False
+		#~ platform.visted = False
 		return True
 
 		
@@ -296,6 +332,7 @@ colCount = 5
 rowCount = 5
 maze = Maze(rowCount = rowCount, colCount = colCount)
 maze.generateMaze()
+maze.traverseMaze()
 mc.playbackOptions(max = maze.time)
 print "Platforms: " + str(Platform.platCount)
 print "Connections: " + str(Connection.conCount)
