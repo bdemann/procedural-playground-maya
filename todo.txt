@@ -1,0 +1,14 @@
+I would like to be able to
+add a random height to each platform. I think just 1 2 or 3
+add more connections
+	stairs
+	other monkey bars
+	zipline
+	ladders
+camera tipping over on a shape
+rats?
+walls
+better posts
+better bottom
+better transversing algorithm
+
