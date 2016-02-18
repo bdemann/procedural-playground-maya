@@ -45,8 +45,40 @@ class Platform:
 			supports[i] = mc.polyCube(h = height)[0]
 			yMove = (Platform.headSpace - (height - 1) / 2.0) + (8 * self.height)
 			mc.move(pow(-1, i/2) * 5, yMove, pow(-1, i) * 5)
-		self.name = mc.group(supports, base, shapes, name = "platform")
 		
+		walls = range(0)
+		if(not self.north):
+			walls.append(buildWall())
+			mc.move(5, (8 * self.height), 0)
+			mc.rotate(0, 90, 0)
+		if(not self.south):
+			walls.append(buildWall())
+			mc.move(-5, (8 * self.height), 0)
+			mc.rotate(0, 90, 0)
+		if(not self.west):
+			walls.append(buildWall())
+			mc.move(0, (8 * self.height), -5)
+		if(not self.east):
+			walls.append(buildWall())
+			mc.move(0, (8 * self.height), 5)
+			
+		self.name = mc.group(supports, base, shapes, walls, name = "platform")
+		mc.move(0, (8 * self.height), 0, self.name, r=True)
+		print(self.name + " " + str(8 * self.height))
+	
+	def buildWall(self):
+		rail = range(1)
+		rail[0] = mc.polyCylinder(r = 0.1, height = 10, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0];
+		railHeight = 5.0
+		mc.move(0, railHeight, 0)
+		numOfBars = 7
+		bars = range(numOfBars)
+		for i in range(1, numOfBars + 1):
+			bars[i - 1] = mc.polyCylinder(r = 0.1, height = 5, sx = 20, sy = 1, sz = 1, ax = [0, 1, 0])[0]
+			x = pow(-1, i) * ((i/2)/((numOfBars + 1) * 1.0) * 10)
+			mc.move(x, railHeight/2.0, 0)
+		return mc.group(rail, bars, name = "wall")
+	
 	def getName(self):
 		return self.name
 		
@@ -66,9 +98,10 @@ class Connection:
 	'Connection between two playgound platforms'
 	conCount = 0
 	
-	def __init__(self, pRow, pCol):
+	def __init__(self, pRow, pCol, dHeight):
 		self.pRow = pRow
 		self.pCol = pCol
+		self.dHeight = dHeight
 		#print "Adding to [" + str(pRow) + "][" + str(pCol) + "]"
 		Connection.conCount += 1
 		self.name = "connection"
@@ -77,12 +110,27 @@ class Connection:
 		print "Total Connections %d" % Connection.platCount
 		
 	def draw(self, seed):
-		if(random.randint(1, 2) == 1):
-			self.makeBridge()
+		if(self.dHeight == 0):
+			if(random.randint(1, 2) == 1):
+				self.makeBridge()
+			else:
+				self.makeMonkeyBars()
+		elif(self.dHeight == 1 or self.dHeight == -1):
+			self.makeStairs()
 		else:
-			self.makeMonkeyBars()
+			self.makeLadder()
 	
 	def getName(self):
+		return self.name
+	
+	def makeLadder(self):
+		ladder = mc.polyCube()[0]
+		self.name = mc.group(ladder, name = "ladder")
+		return self.name
+	
+	def makeStairs(self):
+		stairs = mc.polyCube()[0]
+		self.name = mc.group(stairs, name = "stairs")
 		return self.name
 	
 	def makeBridge(self):
@@ -278,8 +326,6 @@ class Maze:
 		if(row > self.rowCount or col > self.colCount or row < 0 or col < 0):
 			return False
 		if(self.platforms[row][col] != 0):
-			#~ if(not self.platforms[row][col].visted):
-				#~ self.cameraMove(row, col)
 			return True
 		
 		#Figure out north
@@ -290,41 +336,27 @@ class Maze:
 		west = self.westChoice(row, col)
 		#Figure out south
 		south = self.southChoice(row, col)
-			
-		self.platforms[row][col] = Platform(north = north, east = east, west = west, south = south, height = 3)
+		
+		height = random.randint(1, 3)
+		
+		self.platforms[row][col] = Platform(north = north, east = east, west = west, south = south, height = height)
 		platform = self.platforms[row][col]
-		#~ platform.visted = True
-		#~ self.cameraMove(row, col)
 		if(platform.hasEast()):
-			#~ self.cameraTurn("east")
 			if(self.generateNeighbors(row, col + 1) and col < self.colCount -1):
-				print "Making East conn from [" + str(row) + "][" + str(col) + "] to [" + str(row) + "][" + str(col + 1) + "]"
-				self.hConnect[row][col] = Connection(row, col)
-				#~ self.cameraTurn("west")
-				#~ self.cameraMove(row, col)
+				connHeight = platform.height - self.platforms[row][col + 1].height
+				self.hConnect[row][col] = Connection(row, col, connHeight)
 		if(platform.hasSouth()):
-			#~ self.cameraTurn("south")
 			if(self.generateNeighbors(row + 1, col) and row < self.rowCount -1):
-				print "Making South conn from [" + str(row) + "][" + str(col) + "] to [" + str(row + 1) + "][" + str(col) + "]"
-				self.vConnect[row][col] = Connection(row, col)
-				#~ self.cameraTurn("north")
-				#~ self.cameraMove(row, col)
+				connHeight = platform.height - self.platforms[row + 1][col].height
+				self.vConnect[row][col] = Connection(row, col, connHeight)
 		if(platform.hasWest()):
-			#~ self.cameraTurn("west")
 			if(self.generateNeighbors(row, col - 1) and col < self.colCount -1):
-				print "Making West conn from [" + str(row) + "][" + str(col - 1) + "] to [" + str(row) + "][" + str(col) + "]"
-				self.hConnect[row][col - 1] = Connection(row, col - 1)
-				#~ self.cameraTurn("east")
-				#~ self.cameraMove(row, col)
+				connHeight = platform.height - self.platforms[row][col - 1].height
+				self.hConnect[row][col - 1] = Connection(row, col - 1, connHeight)
 		if(platform.hasNorth()):
-			#~ self.cameraTurn("north")
 			if(self.generateNeighbors(row - 1, col) and row < self.rowCount -1):
-				print "Making North conn from [" + str(row -1 ) + "][" + str(col) + "] to [" + str(row) + "][" + str(col) + "]"
-				self.vConnect[row - 1][col] = Connection(row - 1, col)
-				#~ self.cameraTurn("south")
-				#~ self.cameraMove(row, col)
-			
-		#~ platform.visted = False
+				connHeight = platform.height - self.platforms[row - 1][col].height
+				self.vConnect[row - 1][col] = Connection(row - 1, col, connHeight)
 		return True
 
 		
