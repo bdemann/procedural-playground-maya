@@ -48,18 +48,18 @@ class Platform:
 		
 		walls = range(0)
 		if(not self.north):
-			walls.append(buildWall())
+			walls.append(self.buildWall())
 			mc.move(5, (8 * self.height), 0)
 			mc.rotate(0, 90, 0)
 		if(not self.south):
-			walls.append(buildWall())
+			walls.append(self.buildWall())
 			mc.move(-5, (8 * self.height), 0)
 			mc.rotate(0, 90, 0)
 		if(not self.west):
-			walls.append(buildWall())
+			walls.append(self.buildWall())
 			mc.move(0, (8 * self.height), -5)
 		if(not self.east):
-			walls.append(buildWall())
+			walls.append(self.buildWall())
 			mc.move(0, (8 * self.height), 5)
 			
 		self.name = mc.group(supports, base, shapes, walls, name = "platform")
@@ -124,7 +124,26 @@ class Connection:
 		return self.name
 	
 	def makeLadder(self):
-		ladder = mc.polyCube()[0]
+		height = abs(self.dHeight)
+		bars = range(0)
+		numOfBars = height * 5
+		width = 3.0
+		for i in range(1, numOfBars + 1):
+			bars.append(mc.polyCylinder(r = 0.1, height = width, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
+			y = ((height * 8.0)/numOfBars) * i
+			mc.move(0, y, 0)
+		
+		rails = range(0)
+		for i in range(2):
+			rails.append(mc.polyCylinder(r = 0.2, h = 8*height, sx = 20, sy = 1, sz = 1, ax = [0, 1, 0])[0])
+			mc.move(pow(-1, i) * (width/2), height * 4.0, 0)
+			
+		supports = range(0)
+		for i in range(2):
+			supports.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
+			mc.move(0, i * height * 8.0, 0)
+		ladder = mc.group(bars, rails, supports)
+		mc.move(0, 0, 0, ladder, r = True)
 		self.name = mc.group(ladder, name = "ladder")
 		return self.name
 	
