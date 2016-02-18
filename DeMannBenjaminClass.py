@@ -14,6 +14,10 @@ class Platform:
 		self.east = east;
 		self.visted = False;
 		Platform.platCount += 1
+		if(random.randint(1, 2) == 1):
+			self.hasShape = True
+		else:
+			self.hasShape = False
 		self.draw()
 		
 	def displayCount(self):
@@ -22,14 +26,26 @@ class Platform:
 	def draw(self):
 		base = range(1)
 		base[0] = mc.polyCube(w = 10, h = 1, d = 10, sx = 3, sz = 3)[0]
+		mc.move(0, 8 * self.height, 0)
+		print 8 * self.height
+		shapes = range(0)
+		if(self.hasShape):
+			if(random.randint(1, 2) == 1):
+				shapes.append(mc.polyCube()[0])
+			else:
+				shapes.append(mc.polyPyramid()[0])
+			mc.expression( s = shapes[0] + ".rotateX = frame")
+			mc.expression( s = shapes[0] + ".rotateY = frame")
+			mc.expression( s = shapes[0] + ".rotateZ = frame")
+			mc.move(0, (8 * self.height) + 1.5, 0, shapes[0])
 		
 		supports = range(4);
 		for i in supports:
 			height = (8 * self.height) + Platform.headSpace
 			supports[i] = mc.polyCube(h = height)[0]
-			yMove = Platform.headSpace - (height - 1) / 2.0
+			yMove = (Platform.headSpace - (height - 1) / 2.0) + (8 * self.height)
 			mc.move(pow(-1, i/2) * 5, yMove, pow(-1, i) * 5)
-		self.name = mc.group(supports, base, name = "platform")
+		self.name = mc.group(supports, base, shapes, name = "platform")
 		
 	def getName(self):
 		return self.name
@@ -130,11 +146,11 @@ class Maze:
 					mc.parent(self.platforms[i][j].getName(), self.name)
 				if(j < self.colCount -1 and self.hConnect[i][j] != 0):
 					self.hConnect[i][j].draw(0)
-					mc.move((self.hConnect[i][j].pRow*-20), 0, (self.hConnect[i][j].pCol*20) + 10)
+					mc.move((self.hConnect[i][j].pRow*-20), self.platforms[i][j].height * 8, (self.hConnect[i][j].pCol*20) + 10)
 					mc.parent(self.hConnect[i][j].getName(), self.name)
 				if(i < self.rowCount -1 and self.vConnect[i][j] != 0):
 					self.vConnect[i][j].draw(1)
-					mc.move((self.vConnect[i][j].pRow*-20) - 10, 0, (self.vConnect[i][j].pCol*20))
+					mc.move((self.vConnect[i][j].pRow*-20) - 10, self.platforms[i][j].height * 8, (self.vConnect[i][j].pCol*20))
 					mc.rotate(0, 90, 0)
 					mc.parent(self.vConnect[i][j].getName(), self.name)
 	
@@ -214,15 +230,20 @@ class Maze:
 		self.cameraKeyframe(20)
 		
 	def cameraMove(self, x, z):
-		mc.move(x*-20, 2.5, z*20, self.camera)
+		height = (self.platforms[x][z].height * 8) + 2.5
+		mc.move(x*-20, height, z*20, self.camera)
 		self.cameraKeyframe(120)
+		# if(self.platforms[x][z].hasShape):
+			# mc.rotate(180, 0, 0, self.camera)
+			# self.cameraKeyframe(45)
 	
 	#returns true if there is a neighbor
 	def generateNeighbors(self, row, col):
 		if(row > self.rowCount or col > self.colCount or row < 0 or col < 0):
 			return False
 		if(self.platforms[row][col] != 0):
-			self.cameraMove(row, col)
+			if(not self.platforms[row][col].visted):
+				self.cameraMove(row, col)
 			return True
 		
 		#Figure out north
@@ -234,8 +255,9 @@ class Maze:
 		#Figure out south
 		south = self.southChoice(row, col)
 			
-		self.platforms[row][col] = Platform(north = north, east = east, west = west, south = south)
+		self.platforms[row][col] = Platform(north = north, east = east, west = west, south = south, height = 3)
 		platform = self.platforms[row][col]
+		platform.visted = True
 		self.cameraMove(row, col)
 		if(platform.hasEast()):
 			self.cameraTurn("east")
@@ -266,6 +288,7 @@ class Maze:
 				self.cameraTurn("south")
 				self.cameraMove(row, col)
 			
+		platform.visted = False
 		return True
 
 		
