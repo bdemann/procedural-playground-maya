@@ -1,6 +1,21 @@
 import maya.cmds as mc
 import random
 		
+def setShader(shaderName):
+	mc.sets(e = True, forceElement = shaderName)
+
+def createShader(type, name, r, g, b):
+	shaderName = mc.shadingNode(type, asShader = True, name = (name + "Shader"))
+	mc.sets(renderable = True, noSurfaceShader = True, empty = True, name = name)
+	mc.setAttr((name + "Shader.color"), r, g, b, type = "double3")
+	mc.defaultNavigation(connectToExisting = True, source = (name + "Shader"), destination = name)
+	print shaderName
+	return name
+	
+board = createShader("lambert", "boardColor", 0.871, 0.722, 0.529)
+metal = createShader("phong", "metalColor", 0.827, 0.827, 0.827)
+shape = createShader("lambert", "metalColor", 0.5, 0.5, 0.5)
+	
 class Platform:
 	'Playground platform'
 	platCount = 0
@@ -27,6 +42,7 @@ class Platform:
 	def draw(self):
 		base = range(1)
 		base[0] = mc.polyCube(w = 10, h = 1, d = 10, sx = 3, sz = 3)[0]
+		setShader(board)
 		
 		shapes = range(0)
 		if(self.hasShape):
@@ -38,6 +54,7 @@ class Platform:
 			mc.expression( s = shapes[0] + ".rotateY = frame")
 			mc.expression( s = shapes[0] + ".rotateZ = frame")
 			mc.move(0, 0 + 1.5, 0, shapes[0])
+			setShader(shape)
 		
 		supports = range(4);
 		for i in supports:
@@ -45,22 +62,27 @@ class Platform:
 			supports[i] = mc.polyCube(h = height)[0]
 			yMove = (Platform.headSpace - (height - 1) / 2.0) + 0
 			mc.move(pow(-1, i/2) * 5, yMove, pow(-1, i) * 5)
+			setShader(board)
 		
 		walls = range(0)
 		if(not self.north):
 			walls.append(self.buildWall())
 			mc.move(5, 0, 0)
 			mc.rotate(0, 90, 0)
+			setShader(metal)
 		if(not self.south):
 			walls.append(self.buildWall())
 			mc.move(-5, 0, 0)
 			mc.rotate(0, 90, 0)
+			setShader(metal)
 		if(not self.west):
 			walls.append(self.buildWall())
 			mc.move(0, 0, -5)
+			setShader(metal)
 		if(not self.east):
 			walls.append(self.buildWall())
 			mc.move(0, 0, 5)
+			setShader(metal)
 			
 		self.name = mc.group(supports, base, shapes, walls, name = "platform")
 		mc.move(0, (Platform.heightFactor * self.height), 0, self.name)
@@ -144,22 +166,26 @@ class Connection:
 			bars.append(mc.polyCylinder(r = 0.1, height = width, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			y = ((height * 8.0)/numOfBars) * i
 			mc.move(0, y, 0)
+			setShader(metal)
 		
 		rails = range(0)
 		for i in range(2):
 			rails.append(mc.polyCylinder(r = 0.2, h = 8*height, sx = 20, sy = 1, sz = 1, ax = [0, 1, 0])[0])
 			mc.move(pow(-1, i) * (width/2), height * 4.0, 0)
+			setShader(metal)
 			
 		supports = range(0)
 		for i in range(2):
 			supports.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			mc.move(0, i * height * 8.0, 0)
+			setShader(metal)
 		
 		ladder = mc.group(bars, rails, supports)
 		mc.move(0, 0, 5, ladder)
 		
 		path = mc.polyCube( w = 4, h = 1 , d = 10)[0]
 		path = mc.group(path)
+		setShader(board)
 		
 		self.name = mc.group(ladder, path, name = "ladder")
 		
@@ -183,6 +209,7 @@ class Connection:
 			y = i * (8.0 / numOfSteps)
 			z = (i * (10.0 / numOfSteps)) + (stepDepth/2.0) -5
 			mc.move(0, y, z)
+			setShader(board)
 		self.name = mc.group(steps, name = "stairs")
 		mc.move(0, 0, 0, self.name + ".scalePivot", self.name + ".rotatePivot", absolute=True)
 		return self.name
@@ -197,6 +224,7 @@ class Connection:
 			mc.move(0, y, z)
 			rotateX = pow(-1, i) * (i/2) * -2
 			mc.rotate(rotateX, 0, 0)
+			setShader(board)
 		self.name = mc.group(planks, name = "bridge")
 		return self.name
 
@@ -208,16 +236,19 @@ class Connection:
 			bars.append(mc.polyCylinder(r = 0.1, height = width, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			z = pow(-1, i) * ((i/2)/((numOfBars + 1) * 1.0) * 10)
 			mc.move(0, 0, z)
+			setShader(metal)
 		
 		rails = range(0)
 		for i in range(2):
 			rails.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [0, 0, 1])[0])
 			mc.move(pow(-1, i) * (width/2), 0, 0)
+			setShader(metal)
 			
 		supports = range(0)
 		for i in range(2):
 			supports.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			mc.move(0, 0, pow(-1, i) * 5)
+			setShader(metal)
 		monkeyBars = mc.group(bars, rails, supports)
 		mc.move(0, Platform.headSpace - 2, 0, monkeyBars, r = True)
 		self.name = mc.group(monkeyBars, name = "monkeyBars")
