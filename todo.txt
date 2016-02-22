@@ -1,13 +1,12 @@
 I would like to be able to
 add a random height to each platform. I think just 1 2 or 3
+	actually I think I want the user to be able to input what the max height should be. That is something that they can have a lot more control over. since the random might not get out as far as they want.
 add more connections
-	stairs
 	other monkey bars
 	zipline
-	ladders
+	tripole
 camera tipping over on a shape
 rats?
-walls
 better posts
 better bottom
 better transversing algorithm
