@@ -1,10 +1,26 @@
 import maya.cmds as mc
 import random
 		
+def setShader(shaderName):
+	mc.sets(e = True, forceElement = shaderName)
+
+def createShader(type, name, r, g, b):
+	shaderName = mc.shadingNode(type, asShader = True, name = (name + "Shader"))
+	mc.sets(renderable = True, noSurfaceShader = True, empty = True, name = name)
+	mc.setAttr((name + "Shader.color"), r, g, b, type = "double3")
+	mc.defaultNavigation(connectToExisting = True, source = (name + "Shader"), destination = name)
+	print shaderName
+	return name
+	
+board = createShader("lambert", "boardColor", 0.871, 0.722, 0.529)
+metal = createShader("phong", "metalColor", 0.827, 0.827, 0.827)
+shape = createShader("lambert", "metalColor", 0.5, 0.5, 0.5)
+	
 class Platform:
 	'Playground platform'
 	platCount = 0
 	headSpace = 10
+	heightFactor = 8
 	
 	def __init__(self, north = False, south = False, west = False, east = False, height = 1):
 		self.height = height
@@ -26,45 +42,51 @@ class Platform:
 	def draw(self):
 		base = range(1)
 		base[0] = mc.polyCube(w = 10, h = 1, d = 10, sx = 3, sz = 3)[0]
-		mc.move(0, 8 * self.height, 0)
-		print 8 * self.height
+		setShader(board)
+		
 		shapes = range(0)
 		if(self.hasShape):
 			if(random.randint(1, 2) == 1):
-				shapes.append(mc.polyCube()[0])
+				shapes.append(mc.polyCube(name = "mazeShape")[0])
 			else:
-				shapes.append(mc.polyPyramid()[0])
+				shapes.append(mc.polyPyramid(name = "mazeShape")[0])
 			mc.expression( s = shapes[0] + ".rotateX = frame")
 			mc.expression( s = shapes[0] + ".rotateY = frame")
 			mc.expression( s = shapes[0] + ".rotateZ = frame")
-			mc.move(0, (8 * self.height) + 1.5, 0, shapes[0])
+			mc.move(0, 0 + 1.5, 0, shapes[0])
+			setShader(shape)
 		
 		supports = range(4);
 		for i in supports:
-			height = (8 * self.height) + Platform.headSpace
+			height = (Platform.heightFactor * self.height) + Platform.headSpace
 			supports[i] = mc.polyCube(h = height)[0]
-			yMove = (Platform.headSpace - (height - 1) / 2.0) + (8 * self.height)
+			yMove = (Platform.headSpace - (height - 1) / 2.0) + 0
 			mc.move(pow(-1, i/2) * 5, yMove, pow(-1, i) * 5)
+			setShader(board)
 		
 		walls = range(0)
 		if(not self.north):
 			walls.append(self.buildWall())
-			mc.move(5, (8 * self.height), 0)
+			mc.move(5, 0, 0)
 			mc.rotate(0, 90, 0)
+			setShader(metal)
 		if(not self.south):
 			walls.append(self.buildWall())
-			mc.move(-5, (8 * self.height), 0)
+			mc.move(-5, 0, 0)
 			mc.rotate(0, 90, 0)
+			setShader(metal)
 		if(not self.west):
 			walls.append(self.buildWall())
-			mc.move(0, (8 * self.height), -5)
+			mc.move(0, 0, -5)
+			setShader(metal)
 		if(not self.east):
 			walls.append(self.buildWall())
-			mc.move(0, (8 * self.height), 5)
+			mc.move(0, 0, 5)
+			setShader(metal)
 			
 		self.name = mc.group(supports, base, shapes, walls, name = "platform")
-		mc.move(0, (8 * self.height), 0, self.name, r=True)
-		print(self.name + " " + str(8 * self.height))
+		mc.move(0, (Platform.heightFactor * self.height), 0, self.name)
+		mc.makeIdentity(self.name, apply = True, t = 1, s = 1, n = 2)
 	
 	def buildWall(self):
 		rail = range(1)
@@ -98,10 +120,12 @@ class Connection:
 	'Connection between two playgound platforms'
 	conCount = 0
 	
-	def __init__(self, pRow, pCol, dHeight):
+	def __init__(self, pRow, pCol, height, dHeight, direction):
 		self.pRow = pRow
 		self.pCol = pCol
+		self.height = height
 		self.dHeight = dHeight
+		self.direction = direction
 		#print "Adding to [" + str(pRow) + "][" + str(pCol) + "]"
 		Connection.conCount += 1
 		self.name = "connection"
@@ -109,16 +133,26 @@ class Connection:
 	def displayCount(self):
 		print "Total Connections %d" % Connection.platCount
 		
-	def draw(self, seed):
+	def draw(self):
 		if(self.dHeight == 0):
 			if(random.randint(1, 2) == 1):
 				self.makeBridge()
 			else:
 				self.makeMonkeyBars()
-		elif(self.dHeight == 1 or self.dHeight == -1):
+		elif(abs(self.dHeight) == 1):
 			self.makeStairs()
 		else:
 			self.makeLadder()
+		mc.move(0, self.height * Platform.heightFactor, 0, self.name)
+		if(self.direction == "north"):
+			mc.rotate(0, 90, 0)
+		elif(self.direction == "south"):
+			mc.rotate(0, -90, 0)
+		elif(self.direction == "west"):
+			mc.rotate(0, 180, 0)
+		elif(self.direction == "east"):
+			mc.rotate(0, 0, 0)
+		mc.makeIdentity(self.name, apply = True, t = 1, r = 1, s = 1, n = 2)
 	
 	def getName(self):
 		return self.name
@@ -132,24 +166,52 @@ class Connection:
 			bars.append(mc.polyCylinder(r = 0.1, height = width, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			y = ((height * 8.0)/numOfBars) * i
 			mc.move(0, y, 0)
+			setShader(metal)
 		
 		rails = range(0)
 		for i in range(2):
 			rails.append(mc.polyCylinder(r = 0.2, h = 8*height, sx = 20, sy = 1, sz = 1, ax = [0, 1, 0])[0])
 			mc.move(pow(-1, i) * (width/2), height * 4.0, 0)
+			setShader(metal)
 			
 		supports = range(0)
 		for i in range(2):
 			supports.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			mc.move(0, i * height * 8.0, 0)
+			setShader(metal)
+		
 		ladder = mc.group(bars, rails, supports)
-		mc.move(0, 0, 0, ladder, r = True)
-		self.name = mc.group(ladder, name = "ladder")
+		mc.move(0, 0, 5, ladder)
+		
+		path = mc.polyCube( w = 4, h = 1 , d = 10)[0]
+		path = mc.group(path)
+		setShader(board)
+		
+		self.name = mc.group(ladder, path, name = "ladder")
+		
+		# if( self.dHeight < 0 ):
+			# mc.move(0, height * -8.0, 0, self.name, r = True)
+			# mc.rotate(0, 180, 0, self.name)
+			# print "The dHeight is negative"
+		# else:
+			# print "The dHeight is positive"
+		
+		mc.move(0, 0, 0, self.name + ".scalePivot", self.name + ".rotatePivot", absolute=True)
+		
 		return self.name
 	
 	def makeStairs(self):
-		stairs = mc.polyCube()[0]
-		self.name = mc.group(stairs, name = "stairs")
+		steps = range(0)
+		numOfSteps = 7;
+		stepDepth = 1;
+		for i in range(numOfSteps):
+			steps.append(mc.polyCube(w = 8, h = .5, d = 1)[0])
+			y = i * (8.0 / numOfSteps)
+			z = (i * (10.0 / numOfSteps)) + (stepDepth/2.0) -5
+			mc.move(0, y, z)
+			setShader(board)
+		self.name = mc.group(steps, name = "stairs")
+		mc.move(0, 0, 0, self.name + ".scalePivot", self.name + ".rotatePivot", absolute=True)
 		return self.name
 	
 	def makeBridge(self):
@@ -162,6 +224,7 @@ class Connection:
 			mc.move(0, y, z)
 			rotateX = pow(-1, i) * (i/2) * -2
 			mc.rotate(rotateX, 0, 0)
+			setShader(board)
 		self.name = mc.group(planks, name = "bridge")
 		return self.name
 
@@ -173,16 +236,19 @@ class Connection:
 			bars.append(mc.polyCylinder(r = 0.1, height = width, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			z = pow(-1, i) * ((i/2)/((numOfBars + 1) * 1.0) * 10)
 			mc.move(0, 0, z)
+			setShader(metal)
 		
 		rails = range(0)
 		for i in range(2):
 			rails.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [0, 0, 1])[0])
 			mc.move(pow(-1, i) * (width/2), 0, 0)
+			setShader(metal)
 			
 		supports = range(0)
 		for i in range(2):
 			supports.append(mc.polyCylinder(r = 0.2, h = 10, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0])
 			mc.move(0, 0, pow(-1, i) * 5)
+			setShader(metal)
 		monkeyBars = mc.group(bars, rails, supports)
 		mc.move(0, Platform.headSpace - 2, 0, monkeyBars, r = True)
 		self.name = mc.group(monkeyBars, name = "monkeyBars")
@@ -208,17 +274,24 @@ class Maze:
 		for i in range(self.rowCount):
 			for j in range(self.colCount):
 				if(self.platforms[i][j] != 0):
+					#move the platform into the correct location
 					mc.select(self.platforms[i][j].getName());
 					mc.move(i*-20, 0, j*20, self.platforms[i][j].getName())
 					mc.parent(self.platforms[i][j].getName(), self.name)
 				if(j < self.colCount -1 and self.hConnect[i][j] != 0):
-					self.hConnect[i][j].draw(0)
-					mc.move((self.hConnect[i][j].pRow*-20), self.platforms[i][j].height * 8, (self.hConnect[i][j].pCol*20) + 10)
+					#create any horizontal connection at this location
+					self.hConnect[i][j].draw()
+					mc.move((self.hConnect[i][j].pRow*-20), 0, (self.hConnect[i][j].pCol*20) + 10)
+					# if(self.platforms[i][j].height < self.platforms[i][j + 1]):
+						# mc.rotate(0, 180, 0)
 					mc.parent(self.hConnect[i][j].getName(), self.name)
 				if(i < self.rowCount -1 and self.vConnect[i][j] != 0):
-					self.vConnect[i][j].draw(1)
-					mc.move((self.vConnect[i][j].pRow*-20) - 10, self.platforms[i][j].height * 8, (self.vConnect[i][j].pCol*20))
-					mc.rotate(0, 90, 0)
+					#create any vertical connections at this point.
+					self.vConnect[i][j].draw()
+					mc.move((self.vConnect[i][j].pRow*-20) - 10, 0, (self.vConnect[i][j].pCol*20))
+					#mc.rotate(0, 90, 0)
+					# if(self.platforms[i][j].height < self.platforms[i+1][j]):
+						# mc.rotate(0, 180, 0, r = True)
 					mc.parent(self.vConnect[i][j].getName(), self.name)
 	
 	def northChoice(self, row, col):
@@ -297,7 +370,7 @@ class Maze:
 		self.cameraKeyframe(20)
 		
 	def cameraMove(self, x, z):
-		height = (self.platforms[x][z].height * 8) + 2.5
+		height = (self.platforms[x][z].height * 8) + 3.5
 		mc.move(x*-20, height, z*20, self.camera)
 		self.cameraKeyframe(120)
 		# if(self.platforms[x][z].hasShape):
@@ -337,7 +410,7 @@ class Maze:
 				self.cameraTurn("south")
 				self.cameraMove(row, col)
 			
-		platform.visted = False
+		#platform.visted = False
 		return True
 	
 	#returns true if there is a neighbor
@@ -362,25 +435,53 @@ class Maze:
 		platform = self.platforms[row][col]
 		if(platform.hasEast()):
 			if(self.generateNeighbors(row, col + 1) and col < self.colCount -1):
-				connHeight = platform.height - self.platforms[row][col + 1].height
-				self.hConnect[row][col] = Connection(row, col, connHeight)
+				nextPlat = self.platforms[row][col + 1]
+				connDHeight = nextPlat.height - platform.height
+				if(nextPlat.height < platform.height):
+					connHeight = nextPlat.height
+					direction = "west"
+				else:
+					connHeight = platform.height
+					direction = "east"
+				self.hConnect[row][col] = Connection(row, col, connHeight, connDHeight, direction)
 		if(platform.hasSouth()):
 			if(self.generateNeighbors(row + 1, col) and row < self.rowCount -1):
-				connHeight = platform.height - self.platforms[row + 1][col].height
-				self.vConnect[row][col] = Connection(row, col, connHeight)
+				nextPlat = self.platforms[row + 1][col]
+				connDHeight = nextPlat.height - platform.height
+				if(nextPlat.height < platform.height):
+					connHeight = nextPlat.height
+					direction = "north"
+				else:
+					connHeight = platform.height
+					direction = "south"
+				self.vConnect[row][col] = Connection(row, col, connHeight, connDHeight, direction)
 		if(platform.hasWest()):
 			if(self.generateNeighbors(row, col - 1) and col < self.colCount -1):
-				connHeight = platform.height - self.platforms[row][col - 1].height
-				self.hConnect[row][col - 1] = Connection(row, col - 1, connHeight)
+				nextPlat = self.platforms[row][col - 1]
+				connDHeight = nextPlat.height - platform.height
+				if(nextPlat.height < platform.height):
+					connHeight = nextPlat.height
+					direction = "east"
+				else:
+					connHeight = platform.height
+					direction = "west"
+				self.hConnect[row][col - 1] = Connection(row, col - 1, connHeight, connDHeight, direction)
 		if(platform.hasNorth()):
 			if(self.generateNeighbors(row - 1, col) and row < self.rowCount -1):
-				connHeight = platform.height - self.platforms[row - 1][col].height
-				self.vConnect[row - 1][col] = Connection(row - 1, col, connHeight)
+				nextPlat = self.platforms[row - 1][col]
+				connDHeight = nextPlat.height - platform.height
+				if(nextPlat.height < platform.height):
+					connHeight = nextPlat.height
+					direction = "south"
+				else:
+					connHeight = platform.height
+					direction = "north"
+				self.vConnect[row - 1][col] = Connection(row - 1, col, connHeight, connDHeight, direction)
 		return True
 
 		
-colCount = 5
-rowCount = 5
+colCount = 3
+rowCount = 3
 maze = Maze(rowCount = rowCount, colCount = colCount)
 maze.generateMaze()
 maze.traverseMaze()
