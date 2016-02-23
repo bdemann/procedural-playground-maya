@@ -1,43 +1,47 @@
 import maya.cmds as mc
 import random
 
+		
+def setShader(shaderName):
+	mc.sets(e = True, forceElement = shaderName)
+
+def createShader(type, name, r, g, b):
+	shaderNode = mc.shadingNode(type, asShader = True, name = (name + "Shader"))
+	shaderSet = mc.sets(renderable = True, noSurfaceShader = True, empty = True, name = name)
+	mc.setAttr((shaderNode + ".color"), r, g, b, type = "double3")
+	mc.defaultNavigation(connectToExisting = True, source = shaderNode, destination = shaderSet)
+	return shaderSet
+	
+board = createShader("lambert", "boardColor", 0.871, 0.722, 0.529)
+metal = createShader("phong", "metalColor", 0.827, 0.827, 0.827)
+shape = createShader("lambert", "shapeColor", 0.5, 0.5, 0.5)
+
 class Model:
 	'Class for modeling things by itself before incorporating it into the model.'
-		
+	headSpace = 10
+	
 	def __init__(self, dHeight):
 		self.dHeight = dHeight
 		
 	def buildModel(self):
-		line = mc.polyCube(d = 10, h = 1, w = 1, sx = 3)[0]
-		
-		pEx = mc.polyExtrudeFacet(line + ".f[6:8]", keepFacesTogether=1, pvx=0, pvy=0, pvz=-5, divisions=1)[0]
-		mc.setAttr(pEx + ".localTranslate", 0, 0, 1, type="double3")
-		
-		pEx = mc.polyExtrudeFacet(line + ".f[0:2]", keepFacesTogether=1, pvx=0, pvy=0, pvz=-5, divisions=1)[0]
-		mc.setAttr(pEx + ".localTranslate", 0, 0, 1, type="double3")
-		
-		mc.select(line + ".f[16]")
-		mc.select(line + ".f[20]", tgl = True)
-		mc.select(line + ".f[24]", tgl = True)
-		mc.select(line + ".f[28]", tgl = True)
-		pEx = mc.polyExtrudeFacet()[0]
-		mc.setAttr(pEx + ".localTranslate", 0, 0, 5, type="double3")
-		
-		exFace = mc.polyExtrudeFacet(line + ".f[4]")
-		mc.setAttr(exFace[0] + ".localTranslate", 0, 0, -0.5, type="double3")
-		
-		dbHeight = 3
-		dropBar = mc.polyCylinder(r = 0.15, height = dbHeight, sx = 20, sy = 1, sz = 1, ax = [0, 1, 0])[0]
-		mc.move(0, dbHeight/2, 0, dropBar)
-		hHeight = 3
-		handle = mc.polyCylinder(r = 0.15, height = hHeight, sx = 20, sy = 1, sz = 1, ax = [1, 0, 0])[0]
-		mc.move(0, dbHeight, 0, handle)
-		
-		self.name = mc.group(line, name = "zipline")
-		return self.name
+		planks = range(0)
+		numOfPlanks = 10;
+		roofHeight = 8.0
+		platformWidth = 10.0
+		for i in range(0, numOfPlanks):
+			planks.append(mc.polyCube(w = 8, h = .5, d = 1)[0])
+			y = roofHeight - ((i/2) * (roofHeight / numOfPlanks))
+			z = pow(-1, i) * (i * ((platformWidth/2.0) / numOfPlanks))
+			mc.move(0, y, z)
+			rotateX = pow(-1, i) * 45
+			mc.rotate(rotateX, 0, 0)
+			mc.move(0, (i/2) * -.15, 0, r = True, os = True)
+			setShader(board)
+		roof = mc.group(planks, name = "bridge")
+		return roof
 		
 	def temp(self):
-		print ""
+		plat = Platform()
 
 model = Model(-3)
 model.buildModel()
